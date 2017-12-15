@@ -13,7 +13,7 @@ class Employee(models.Model):
 
 class Attendance(models.Model):
     name = models.ForeignKey(Employee, on_delete=models.CASCADE)
-    present_days = models.IntegerField(default=0)
+    total_present_days = models.IntegerField(default=0)
     total_days = models.IntegerField(default=30)
     updated_on = models.DateTimeField(default=timezone.now)
 
@@ -33,7 +33,7 @@ class Payroll(models.Model):
     def save(self, *args, **kwargs):
         attendee_name = Attendance.objects.get(name=self.name)
         employee = Employee.objects.get(name=self.name)
-        present_days = attendee_name.present_days
+        present_days = attendee_name.total_present_days
         total_days = attendee_name.total_days
         salary = employee.salary
         self.payment = salary / total_days * present_days

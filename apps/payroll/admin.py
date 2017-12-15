@@ -14,7 +14,7 @@ class AttendanceAdmin(admin.ModelAdmin):
 
 
 class PayrollAdmin(admin.ModelAdmin):
-    list_display = ('updated_on', 'name', 'payment')
+    list_display = [f.name for f in Payroll._meta.fields]
 
 
 admin.site.register(Employee, EmployeeAdmin)

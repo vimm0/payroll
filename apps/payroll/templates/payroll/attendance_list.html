@@ -11,7 +11,7 @@
         <th scope="col">Employee Name</th>
         <th scope="col">Total Present Days</th>
         <th scope="col">Total Days</th>
-        <th scope="col">Note</th>
+        <th scope="col">Updated On</th>
 
     </tr>
     </thead>
@@ -20,10 +20,9 @@
     <tr>
         <th scope="row">{{obj.id}}</th>
         <td>{{obj.name}}</td>
-        <td>{{obj.present_days}}</td>
+        <td>{{obj.total_present_days}}</td>
         <td>{{obj.total_days}}</td>
-        <td>{{obj.note}}</td>
-
+        <td>{{obj.updated_on}}</td>
     </tr>
     {% endfor %}
     </tbody>
