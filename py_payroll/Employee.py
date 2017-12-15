@@ -1,4 +1,6 @@
-from Input import name, position, salary
+from .Input import name, position, salary
+
+
 class Employee:
     """
        Keep information of employee and their information.
@@ -19,5 +21,6 @@ class Employee:
         return "Salary: " + str(self.salary)
 
 
-p = Employee(name, position, salary)
-print(p.get_position())
+# if __name__ == "__main__":
+#     p = Employee(name, position, salary)
+#     print(p.get_position())

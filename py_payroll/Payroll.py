@@ -1,14 +1,12 @@
-from Attendance import Attendance
-from Employee import Employee
-
-attendance = Attendance()
-employee = Employee()
+from . import Attendance
+from . import Employee
 
 
 class PayRoll:
     """
     Calculate the total payment company pay to their employee.
     """
+
     def __init__(self, attendance, employee):
         self.attendance = attendance
         self.employee = employee
@@ -25,5 +23,9 @@ class PayRoll:
         return 'Total Payment: ' + str(payment)
 
 
-p = PayRoll(attendance, employee)
-print(p.get_payroll())
+if __name__ == "__main__":
+    attendance = Attendance()
+    employee = Employee()
+
+    p = PayRoll(attendance, employee)
+    print(p.get_payroll())
