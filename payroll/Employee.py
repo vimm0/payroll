@@ -1,12 +1,13 @@
+from Input import name, position, salary
 class Employee:
     """
        Keep information of employee and their information.
     """
 
-    def __init__(self):
-        self.name = 'Santosh Chaudhary'
-        self.position = 'Manager'
-        self.salary = 45000
+    def __init__(self, name, position, salary):
+        self.name = name
+        self.position = position
+        self.salary = salary
 
     def get_employee_name(self):
         return "Employee Name: " + str(self.name)
@@ -16,3 +17,7 @@ class Employee:
 
     def get_salary(self):
         return "Salary: " + str(self.salary)
+
+
+p = Employee(name, position, salary)
+print(p.get_position())
