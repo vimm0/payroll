@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from django.views.generic import ListView
 
-from .models import Payroll, Employee, Attendance
+from .models import PayRoll, Employee, Attendance
 
 
 class EmployeeListView(ListView):
@@ -9,7 +9,7 @@ class EmployeeListView(ListView):
 
 
 class PayRollListView(ListView):
-    queryset = Payroll.objects.all().select_related('name')
+    queryset = PayRoll.objects.all().select_related('name')
 
 
 class AttendanceListView(ListView):
