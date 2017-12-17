@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load ruppes %}
 {% block content %}
 <h3>{% block title %}Pay Roll{% endblock %}</h3>
 
@@ -7,20 +8,27 @@
     <tr>
         <th scope="col">S. No.</th>
         <th scope="col">Name</th>
-        <th scope="col">Cause</th>
         <th scope="col">Actual Salary</th>
+        <th scope="col">Total Days</th>
+        <th scope="col">Present Days</th>
+        <th scope="col">Deduction</th>
+        <th scope="col">Addition</th>
         <th scope="col">Payment</th>
         <th scope="col">updated</th>
     </tr>
     </thead>
     <tbody>
+    <p class="float-right">Monthly Sheet Updated:</p>
     {% for obj in object_list %}
     <tr>
         <th scope="row">{{ obj.id }}</th>
         <td>{{ obj.name }}</td>
-        <td>{{ obj.cause}}</td>
-        <td>{{obj.name.salary}}</td>
-        <td>{{ obj.payment }}</td>
+        <td>{{obj.name.salary| ruppes}}</td>
+        <td>{{obj.attendance.total_days}} Days</td>
+        <td>{{obj.attendance.total_present_days}} Days</td>
+        <td>{{ obj.deduction_entry.amount | ruppes }}</td>
+        <td>{{ obj.addition_entry.amount | ruppes }}</td>
+        <td>{{ obj.payment| ruppes }}</td>
         <td>{{ obj.updated_on }}</td>
     </tr>
     {% endfor %}

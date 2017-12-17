@@ -4,8 +4,10 @@ from django.contrib.auth.models import Group, User
 from .models import Employee, Attendance, Tax, ProvidentFund, Addition, EmployeeStatus
 from .models import PayRoll, MonthlySheet, Deduction, Incentive, Compensation
 
+
 class EmployeeStatusAdmin(admin.ModelAdmin):
     list_display = [f.name for f in EmployeeStatus._meta.fields]
+
 
 class EmployeeAdmin(admin.ModelAdmin):
     list_display = [f.name for f in Employee._meta.fields]
@@ -22,26 +24,34 @@ class IncentiveAdmin(admin.ModelAdmin):
 class CompensationAdmin(admin.ModelAdmin):
     list_display = [f.name for f in Compensation._meta.fields]
 
+
 class AdditionAdmin(admin.ModelAdmin):
     list_display = [f.name for f in Addition._meta.fields]
+
 
 class TaxAdmin(admin.ModelAdmin):
     list_display = [f.name for f in Tax._meta.fields]
 
+
 class ProvidentFundAdmin(admin.ModelAdmin):
     list_display = [f.name for f in ProvidentFund._meta.fields]
+
 
 class DeductionAdmin(admin.ModelAdmin):
     list_display = [f.name for f in Deduction._meta.fields]
 
-class PayRollInlineAdmin (admin.TabularInline):
+
+class PayRollInlineAdmin(admin.TabularInline):
     model = PayRoll
+
 
 class PayRollAdmin(admin.ModelAdmin):
     list_display = [f.name for f in PayRoll._meta.fields]
 
+
 class MonthlySheetAdmin(admin.ModelAdmin):
-    inlines = [ PayRollInlineAdmin ]
+    inlines = [PayRollInlineAdmin]
+
 
 admin.site.register(EmployeeStatus, EmployeeStatusAdmin)
 admin.site.register(Employee, EmployeeAdmin)

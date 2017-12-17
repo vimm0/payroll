@@ -1,27 +1,28 @@
 {% extends 'base.html' %}
 {% block content %}
 {% load ruppes %}
-<h3>{% block title %}Employee{% endblock %}</h3>
+<h3>{% block title %}Addition{% endblock %}</h3>
 
 <table class="table table-striped">
     <thead>
     <tr>
         <th scope="col">S.No</th>
         <th scope="col">Employee Name</th>
-        <th scope="col">Salary</th>
-        <th scope="col">Position</th>
-        <th scope="col">Status</th>
+        <th scope="col">Incentive</th>
+        <th scope="col">Compenstation</th>
+        <th scope="col">Total Amount</th>
+        <th scope="col">Created On</th>
     </tr>
     </thead>
     <tbody>
     {% for obj in object_list %}
-
     <tr>
         <th scope="row">{{obj.id}}</th>
         <td>{{obj.name}}</td>
-        <td>{{obj.salary|ruppes}}</td>
-        <td>{{obj.position}}</td>
-        <td>{{obj.status}}</td>
+        <td>{{obj.incentive_entry.amount|ruppes}}</td>
+        <td>{{obj.compenstation_entry.amount|ruppes}}</td>
+        <td>{{obj.amount|ruppes}}</td>
+        <td>{{obj.created_on}}</td>
 
     </tr>
     {% endfor %}

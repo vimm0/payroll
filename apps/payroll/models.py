@@ -1,17 +1,19 @@
+from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.db import models
 from django.utils import timezone
 
+suspended_status = [('Suspended', 'Suspended'), ('Active', 'Active')]
 martial_status = [('Married', 'Married'), ('Unmarried', 'Unmarried')]
 
 
 class EmployeeStatus(models.Model):
-    suspended = models.BooleanField(default=False)
+    suspended = models.CharField(max_length=15, choices=suspended_status, default='Active')
     married = models.CharField(max_length=10, choices=martial_status, default='Unmarried')
     created_on = models.DateTimeField(auto_now_add=True)
     updated_on = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return self.married
+        return str(self.suspended) + '-' + str(self.married)
 
     class Meta:
         verbose_name_plural = "0. Employee Statuses"
@@ -32,6 +34,7 @@ class Employee(models.Model):
 
 class Attendance(models.Model):
     name = models.ForeignKey(Employee, on_delete=models.CASCADE)
+    cause = models.CharField(max_length=255, default='Not mentioned.')
     total_present_days = models.IntegerField(default=0)
     total_days = models.IntegerField(default=30)
     updated_on = models.DateTimeField(auto_now=True)
@@ -55,7 +58,7 @@ class Incentive(models.Model):
     created_on = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return str(self.name)
+        return str(self.name) + ' : ' + naturaltime(self.created_on)
 
     def save(self, *args, **kwargs):
         self.sum_total += self.amount
@@ -72,22 +75,20 @@ class Compensation(models.Model):
     the suspension day.
     """
     name = models.ForeignKey(Employee, on_delete=models.CASCADE)
+    cause = models.CharField(max_length=255, default='Not mentioned.')
     attendance_entry = models.ForeignKey(Attendance, on_delete=models.CASCADE)
     amount = models.IntegerField(default=0, editable=False)
     created_on = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return str(self.name)
+        return str(self.name) + ' : ' + naturaltime(self.created_on)
 
-    # def save(self, *args, **kwargs):
-    #     import pdb
-    #     pdb.set_trace()
-    #     if self.name.suspended == True:
-    #         total_days = self.attendance_entry.total_days
-    #         present_days = self.attendance_entry.total_present_days
-    #         self.amount = self.name.salary / total_days * present_days
-    #
-    #     super(Compensation, self).save(*args, **kwargs)
+    def save(self, *args, **kwargs):
+        if self.name.status.suspended == 'Suspended':
+            total_days = self.attendance_entry.total_days
+            present_days = self.attendance_entry.total_present_days
+            self.amount = self.name.salary / total_days * present_days
+        super(Compensation, self).save(*args, **kwargs)
 
     class Meta:
         verbose_name_plural = "4. Compensation"
@@ -95,43 +96,47 @@ class Compensation(models.Model):
 
 class Addition(models.Model):
     name = models.ForeignKey(Employee, on_delete=models.CASCADE)
-    incentive_entry = models.ForeignKey(Incentive, on_delete=models.CASCADE)
-    compenstation_entry = models.ForeignKey(Compensation, on_delete=models.CASCADE)
-    amount = models.IntegerField(default=0)
+    incentive_entry = models.ForeignKey(Incentive, on_delete=models.CASCADE, blank=True, null=True)
+    compenstation_entry = models.ForeignKey(Compensation, on_delete=models.CASCADE, blank=True, null=True)
+    amount = models.IntegerField(default=0, editable=False)
     created_on = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return str(self.name)
+        return str(self.name) + ' : ' + str(self.amount)
 
     class Meta:
         verbose_name_plural = "5. Addition"
 
     def save(self, *args, **kwargs):
-        self.amount = self.incentive_entry.amount + self.compenstation_entry.amount
-
+        if self.incentive_entry and self.compenstation_entry is not None:
+            self.amount = self.incentive_entry.sum_total + self.compenstation_entry.amount
+        elif self.incentive_entry is None:
+            self.amount = self.compenstation_entry.amount
+        elif self.compenstation_entry is None:
+            self.amount = self.incentive_entry.sum_total
+        else:
+            self.amount = 0
         super(Addition, self).save(*args, **kwargs)
 
 
 # Sum is deducted from the payment.
 class Tax(models.Model):
     """
-    Deduce tax and keep track of the total amont deduced in employee working years.
+    Deduce tax and keep track of the total amount deduced in employee working years.
     """
     name = models.ForeignKey(Employee, on_delete=models.CASCADE)
-    cause = models.CharField(max_length=255)
-    amount = models.IntegerField(default=0)
+    cause = models.CharField(max_length=255, default='Tax on salary.')
+    amount = models.IntegerField(default=0, editable=False)
     percent = models.FloatField(default=0)
     created_on = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return str(self.name)
+        return str(self.name) + ' : ' + naturaltime(self.created_on)
 
     def save(self, *args, **kwargs):
         emp_salary = self.name.salary
         self.amount = self.percent / 100 * emp_salary
         super(Tax, self).save(*args, **kwargs)
-
-        # samples = Sample.objects.filter(sampledate__gt=datetime.date(2011, 1, 1), sampledate__lt=datetime.date(2011, 1, 31))
 
     class Meta:
         verbose_name_plural = "6. Tax"
@@ -147,7 +152,7 @@ class ProvidentFund(models.Model):
     created_on = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return str(self.name)
+        return str(self.name) + ' : ' + naturaltime(self.created_on)
 
     def save(self, *args, **kwargs):
         self.sum_total += self.amount
@@ -159,18 +164,24 @@ class ProvidentFund(models.Model):
 
 class Deduction(models.Model):
     name = models.ForeignKey(Employee, on_delete=models.CASCADE)
-    provident_entry = models.ForeignKey(ProvidentFund, on_delete=models.CASCADE)
-    tax_entry = models.ForeignKey(Tax, on_delete=models.CASCADE)
+    provident_entry = models.ForeignKey(ProvidentFund, on_delete=models.CASCADE, blank=True, null=True)
+    tax_entry = models.ForeignKey(Tax, on_delete=models.CASCADE, blank=True, null=True)
     amount = models.IntegerField(default=0)
     created_on = models.DateTimeField(auto_now_add=True)
-
     # updated_on = models.DateTimeField(default=timezone.now)
 
     def __str__(self):
-        return str(self.name)
+        return str(self.name) + ' : ' + str(self.amount)
 
     def save(self, *args, **kwargs):
-        self.amount = self.tax_entry.amount + self.provident_entry.amount
+        if self.tax_entry and self.provident_entry is not None:
+            self.amount = self.tax_entry.amount + self.provident_entry.amount
+        elif self.tax_entry is not None:
+            self.amount = self.tax_entry.amount
+        elif self.provident_entry is not None:
+            self.amount = self.provident_entry.amount
+        else:
+            self.amount = 0
         super(Deduction, self).save(*args, **kwargs)
 
     class Meta:
@@ -182,7 +193,7 @@ class MonthlySheet(models.Model):
     end = models.DateTimeField(null=True)
 
     def __str__(self):
-        return str(self.end)
+        return naturaltime(self.end)
 
     class Meta:
         verbose_name_plural = "9. Monthly Sheets"
@@ -190,29 +201,37 @@ class MonthlySheet(models.Model):
 
 class PayRoll(models.Model):
     name = models.ForeignKey(Employee, on_delete=models.CASCADE)
+    deduction_entry = models.ForeignKey(Deduction, on_delete=models.CASCADE, blank=True, null=True)
+    addition_entry = models.ForeignKey(Addition, on_delete=models.CASCADE, blank=True, null=True)
     attendance = models.ForeignKey(Attendance, on_delete=models.CASCADE)
     monthly_sheet = models.ForeignKey(MonthlySheet, on_delete=models.CASCADE)
-    cause = models.CharField(max_length=255, default='Not mentioned.')
+    # cause = models.CharField(max_length=255, default='Not mentioned.')
     payment = models.PositiveIntegerField(default=0)
-    updated_on = models.DateTimeField(auto_now_add=True)
+    created_on = models.DateTimeField(auto_now_add=True)
+    updated_on = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return str(self.name)
+        return str(self.name) + ' : ' + naturaltime(self.updated_on)
 
     def save(self, *args, **kwargs):
-        attendee_name = Attendance.objects.get(name=self.name)
-        employee = Employee.objects.get(name=self.name)
-        taxee = employee.tax_set.get(name=self.name)
-        emp_provident_fund = employee.providentfund_set.get(name=self.name)
+        # import ipdb
+        # ipdb.set_trace()
+        employee = self.name
+        attendee_name = employee.attendance_set.get(name=self.name)
+        self.payment = employee.salary / attendee_name.total_days * attendee_name.total_present_days
 
-        present_days = attendee_name.total_present_days
-        total_days = attendee_name.total_days
-        salary = employee.salary
-        self.payment = salary / total_days * present_days
-
-        # # # deduction part
-        tax_amount = taxee.percent / 100 * self.payment
-        self.payment = self.payment - tax_amount - emp_provident_fund.amount
+        if self.deduction_entry and self.addition_entry is not None:
+            deduction_amount = self.deduction_entry.amount
+            addition_amount = self.addition_entry.amount
+            self.payment = self.payment + addition_amount - deduction_amount
+        elif self.deduction_entry is not None:
+            deduction_amount = self.deduction_entry.amount
+            self.payment = self.payment - deduction_amount
+        elif self.addition_entry is not None:
+            addition_amount = self.addition_entry.amount
+            self.payment = self.payment - addition_amount
+        else:
+            self.payment = self.payment
         super(PayRoll, self).save(*args, **kwargs)
 
     class Meta:
